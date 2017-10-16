@@ -21,6 +21,10 @@ public enum AABlurAlertStyle {
 }
 
 open class AABlurAlertAction: UIButton {
+    public var buttonColor : UIColor?
+    public var buttonBackgroundColor: UIColor?
+    public var buttonFont : UIFont?
+    
     fileprivate var handler: ((AABlurAlertAction) -> Void)? = nil
     fileprivate var style: AABlurActionStyle = AABlurActionStyle.default
     fileprivate var parent: AABlurAlertController? = nil
@@ -36,33 +40,37 @@ open class AABlurAlertAction: UIButton {
 
         switch self.style {
         case .cancel:
-            self.setTitleColor(UIColor(red:0.47, green:0.50, blue:0.55, alpha:1.00), for: UIControlState.normal)
-            self.backgroundColor = UIColor(red:0.93, green:0.94, blue:0.95, alpha:1.00)
-            self.layer.borderColor = UIColor(red:0.74, green:0.77, blue:0.79, alpha:1.00).cgColor
+            self.setTitleColor(UIColor.darkGray, for: UIControlState.normal)
+            self.backgroundColor = UIColor.white
+            self.layer.borderColor = UIColor.lightGray.cgColor
             self.layer.borderWidth = 1
-            self.layer.cornerRadius = 5
+            self.layer.cornerRadius = 8
             self.layer.shadowOffset = CGSize(width: 0, height: 2)
-            self.layer.shadowRadius = 4
+            self.layer.shadowRadius = 5
             self.layer.shadowOpacity = 0.1
         case .modernCancel:
             self.setTitleColor(UIColor(red:0.47, green:0.50, blue:0.56, alpha:1.00), for: UIControlState.normal)
             self.backgroundColor = UIColor(red:0.93, green:0.94, blue:0.95, alpha:1.00)
-            self.layer.cornerRadius = 5
+            self.layer.cornerRadius = 8
         case .modern:
             self.setTitleColor(UIColor.white, for: UIControlState.normal)
             self.backgroundColor = UIColor(red:0.28, green:0.56, blue:0.90, alpha:1.00)
-            self.layer.cornerRadius = 5
+            self.layer.cornerRadius = 8
         default:
             self.setTitleColor(UIColor.white, for: UIControlState.normal)
-            self.backgroundColor = UIColor(red:0.31, green:0.57, blue:0.87, alpha:1.00)
-            self.layer.borderColor = UIColor(red:0.17, green:0.38, blue:0.64, alpha:1.00).cgColor
-            self.layer.borderWidth = 1
-            self.layer.cornerRadius = 5
+            self.backgroundColor = UIColor(red:2/255, green:85/255, blue:96/255, alpha:1.00)
+            self.layer.borderWidth = 0.0
+            self.layer.cornerRadius = 8
             self.layer.shadowOffset = CGSize(width: 0, height: 2)
             self.layer.shadowRadius = 4
             self.layer.shadowOpacity = 0.1
         }
-        self.setTitleColor(self.titleColor(for: UIControlState.normal)?.withAlphaComponent(0.5), for: UIControlState.highlighted)
+        
+        // if font, color, and background is not nil
+        if buttonFont != nil {
+            self.titleLabel?.font = buttonFont!
+        }
+        
     }
 
     required public init?(coder aDecoder: NSCoder) {
@@ -83,6 +91,9 @@ open class AABlurAlertController: UIViewController {
     open var imageHeight: Float = 175
     open var topImageStyle: AABlurTopImageStyle = AABlurTopImageStyle.default
     open var alertViewWidth: Float?
+    open var bgImage : UIImage?
+    
+    
 //
     /**
      Set the max alert view width
@@ -99,6 +110,12 @@ open class AABlurAlertController: UIViewController {
     public var buttonWidth: CGFloat = 250
     public var buttonHeight: CGFloat = 52
     public var imageTopMargin: CGFloat = 20
+    
+    public var additionalView = UIView(frame: CGRect.zero)
+    
+    open var buttonColor: UIColor?
+    open var buttonBackgroundColor: UIColor = UIColor(red:2/255, green:85/255, blue:96/255, alpha:1.00)
+    open var font: UIFont?
 
     fileprivate var backgroundImage : UIImageView = UIImageView()
     fileprivate(set) public var alertView: UIView = {
@@ -135,7 +152,7 @@ open class AABlurAlertController: UIViewController {
         let sv = UIStackView()
         sv.translatesAutoresizingMaskIntoConstraints = false
         sv.distribution = .fillEqually
-        sv.spacing = 22
+        sv.spacing = 10
         return sv
     }()
 
@@ -183,6 +200,17 @@ open class AABlurAlertController: UIViewController {
         self.alertView.addSubview(alertSubtitle)
         // Set up buttonsStackView
         self.alertView.addSubview(buttonsStackView)
+        
+        additionalView.autoresizesSubviews = true
+        self.alertView.addSubview(additionalView)
+        
+        // font
+        if font != nil {
+            self.alertTitle.font = font!
+            self.alertSubtitle.font = UIFont(name: font!.fontName, size: font!.pointSize - 4)
+        }
+        
+        self.alertTitle.textColor = self.buttonBackgroundColor
 
         // Set up background Tap
         if buttonsStackView.arrangedSubviews.count <= 0 {
@@ -190,82 +218,64 @@ open class AABlurAlertController: UIViewController {
             self.backgroundImage.isUserInteractionEnabled = true
             self.backgroundImage.addGestureRecognizer(tapGesture)
         }
+        
+        self.backgroundImage.image = bgImage
 
         setupConstraints()
     }
 
     fileprivate func setupConstraints() {
-        let viewsDict: [String: Any] = [
-            "alertView": alertView,
-            "alertImage": alertImage,
-            "alertTitle": alertTitle,
-            "alertSubtitle": alertSubtitle,
-            "buttonsStackView": buttonsStackView
-        ]
-        let viewMetrics: [String: Any] = [
-            "margin": margin,
-            "imageTopMargin": imageTopMargin,
-            "spacing": spacing,
-            "titleSubtitleSpacing": titleSubtitleSpacing,
-            "bottomSpacing": bottomSpacing,
-            "alertViewWidth": 450,
-            "alertImageHeight": (alertImage.image != nil) ? imageHeight : 0,
-            "alertTitleHeight": 22,
-            "buttonsStackViewHeight": (buttonsStackView.arrangedSubviews.count > 0) ? buttonHeight : 0
-        ]
+        
+        alertView.translatesAutoresizingMaskIntoConstraints = false
+        //alertImage.translatesAutoresizingMaskIntoConstraints = false
+        alertTitle.translatesAutoresizingMaskIntoConstraints = false
+        alertSubtitle.translatesAutoresizingMaskIntoConstraints = false
+        buttonsStackView.translatesAutoresizingMaskIntoConstraints = false
+        additionalView.translatesAutoresizingMaskIntoConstraints = false
+        
+        alertView.backgroundColor = UIColor.white
+        alertView.layer.borderWidth = 0
+        alertView.layer.cornerRadius = 14.0
+        
+        let additionalHeight = additionalView.heightAnchor.constraint(equalToConstant: (additionalView == nil) ? 0 : 25)
 
-        if let alertViewWidth = alertViewWidth {
-            self.view.addConstraints(NSLayoutConstraint.constraints(
-                withVisualFormat: "H:[alertView(alertViewWidth)]", options: [],
-                metrics: ["alertViewWidth":alertViewWidth], views: viewsDict))
-        } else {
-            let widthConstraints = NSLayoutConstraint(item: alertView,
-                               attribute: NSLayoutAttribute.width,
-                               relatedBy: NSLayoutRelation.equal,
-                               toItem: self.view,
-                               attribute: NSLayoutAttribute.width,
-                               multiplier: 0.7, constant: 0)
-            if let maxAlertViewWidth = maxAlertViewWidth {
-                widthConstraints.priority = 999
-                self.view.addConstraint(NSLayoutConstraint(
-                    item: alertView,
-                    attribute: NSLayoutAttribute.width,
-                    relatedBy: NSLayoutRelation.lessThanOrEqual,
-                    toItem: nil,
-                    attribute: NSLayoutAttribute.width,
-                    multiplier: 1,
-                    constant: maxAlertViewWidth))
-            }
-            self.view.addConstraint(widthConstraints)
-        }
-
-        let alertSubtitleVconstraint = (alertSubtitle.text != nil) ? "titleSubtitleSpacing-[alertSubtitle]-" : ""
-        [NSLayoutConstraint(item: alertView, attribute: .centerX, relatedBy: .equal,
-                            toItem: view, attribute: .centerX, multiplier: 1, constant: 0),
-         NSLayoutConstraint(item: alertView, attribute: .centerY, relatedBy: .equal,
-                            toItem: view, attribute: .centerY, multiplier: 1, constant: 0)
-            ].forEach { self.view.addConstraint($0)}
-        let imageStyleMargin = self.topImageStyle == .fullWidth ? "0" : "imageTopMargin"
-        [NSLayoutConstraint.constraints(
-            withVisualFormat: "V:|-\(imageStyleMargin)-[alertImage(alertImageHeight)]-spacing-[alertTitle(alertTitleHeight)]-\(alertSubtitleVconstraint)margin-[buttonsStackView(buttonsStackViewHeight)]-bottomSpacing-|",
-            options: [], metrics: viewMetrics, views: viewsDict),
-         NSLayoutConstraint.constraints(withVisualFormat: "H:|-\(imageStyleMargin)-[alertImage]-\(imageStyleMargin)-|",
-                                        options: [], metrics: viewMetrics, views: viewsDict),
-         NSLayoutConstraint.constraints(withVisualFormat: "H:|-margin-[alertTitle]-margin-|",
-                                        options: [], metrics: viewMetrics, views: viewsDict),
-         NSLayoutConstraint.constraints(withVisualFormat: "H:|-margin-[alertSubtitle]-margin-|",
-                                        options: [], metrics: viewMetrics, views: viewsDict)
-            ].forEach { NSLayoutConstraint.activate($0) }
-        NSLayoutConstraint.activate([buttonsStackView.centerXAnchor.constraint(equalTo: alertView.centerXAnchor)])
+        NSLayoutConstraint.activate([
+            alertView.leadingAnchor.constraint(equalTo: self.view.leadingAnchor, constant: 25),
+            alertView.trailingAnchor.constraint(equalTo: self.view.trailingAnchor, constant: -25),
+            alertView.centerYAnchor.constraint(equalTo: self.view.centerYAnchor),
+            
+            alertTitle.topAnchor.constraint(equalTo: alertView.topAnchor, constant: 15),
+            alertTitle.leadingAnchor.constraint(equalTo: alertView.leadingAnchor, constant: 20),
+            alertTitle.trailingAnchor.constraint(equalTo: alertView.trailingAnchor, constant: -20),
+            alertTitle.bottomAnchor.constraint(equalTo: alertSubtitle.topAnchor, constant: -10),
+            
+            alertSubtitle.leadingAnchor.constraint(equalTo: alertTitle.leadingAnchor),
+            alertSubtitle.trailingAnchor.constraint(equalTo: alertTitle.trailingAnchor),
+            alertSubtitle.bottomAnchor.constraint(equalTo: additionalView.topAnchor, constant: -15),
+            
+            additionalView.leadingAnchor.constraint(equalTo: alertTitle.leadingAnchor),
+            additionalView.trailingAnchor.constraint(equalTo: alertTitle.trailingAnchor),
+            additionalHeight,
+            additionalView.bottomAnchor.constraint(equalTo: buttonsStackView.topAnchor, constant: -25),
+            
+            buttonsStackView.leadingAnchor.constraint(equalTo: alertTitle.leadingAnchor),
+            buttonsStackView.trailingAnchor.constraint(equalTo: alertTitle.trailingAnchor),
+            buttonsStackView.bottomAnchor.constraint(equalTo: alertView.bottomAnchor, constant: -20),
+            buttonsStackView.heightAnchor.constraint(equalToConstant: 45)
+        ])
+        
+        
     }
 
     open override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
 
         setup()
-
+        self.view.backgroundColor = UIColor.black
+        
         // Set up blur effect
         backgroundImage.image = snapshot()
+        backgroundImage.alpha = 0.8
         let blurEffect = UIBlurEffect(style: blurEffectStyle)
         let blurEffectView = UIVisualEffectView(effect: blurEffect)
         blurEffectView.frame = backgroundImage.bounds
@@ -282,9 +292,13 @@ open class AABlurAlertController: UIViewController {
 
     open func addAction(action: AABlurAlertAction) {
         action.parent = self
+        action.buttonColor = self.buttonColor
+        action.buttonBackgroundColor = self.buttonBackgroundColor
+        action.buttonFont = self.font
+        
         action.translatesAutoresizingMaskIntoConstraints = false
         buttonsStackView.addArrangedSubview(action)
-        NSLayoutConstraint.activate([action.widthAnchor.constraint(equalToConstant: buttonWidth)])
+        //NSLayoutConstraint.activate([action.widthAnchor.constraint(equalToConstant: buttonWidth)])
     }
 
     fileprivate func snapshot() -> UIImage? {
