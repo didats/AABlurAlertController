@@ -71,6 +71,14 @@ open class AABlurAlertAction: UIButton {
             self.titleLabel?.font = buttonFont!
         }
         
+        
+//        if buttonBackgroundColor != nil {
+//            print("Goes here === 123")
+//
+//        }
+//        else {
+//            print("Goes here === 345")
+//        }
     }
 
     required public init?(coder aDecoder: NSCoder) {
@@ -111,7 +119,7 @@ open class AABlurAlertController: UIViewController {
     public var buttonHeight: CGFloat = 52
     public var imageTopMargin: CGFloat = 20
     
-    public var additionalView = UIView(frame: CGRect.zero)
+    public var additionalView : UIView?
     
     open var buttonColor: UIColor?
     open var buttonBackgroundColor: UIColor = UIColor(red:2/255, green:85/255, blue:96/255, alpha:1.00)
@@ -201,9 +209,10 @@ open class AABlurAlertController: UIViewController {
         // Set up buttonsStackView
         self.alertView.addSubview(buttonsStackView)
         
-        additionalView.autoresizesSubviews = true
-        self.alertView.addSubview(additionalView)
-        
+        if additionalView != nil {
+            additionalView!.autoresizesSubviews = true
+            self.alertView.addSubview(additionalView!)
+        }
         // font
         if font != nil {
             self.alertTitle.font = font!
@@ -231,15 +240,13 @@ open class AABlurAlertController: UIViewController {
         alertTitle.translatesAutoresizingMaskIntoConstraints = false
         alertSubtitle.translatesAutoresizingMaskIntoConstraints = false
         buttonsStackView.translatesAutoresizingMaskIntoConstraints = false
-        additionalView.translatesAutoresizingMaskIntoConstraints = false
+        additionalView?.translatesAutoresizingMaskIntoConstraints = false
         
         alertView.backgroundColor = UIColor.white
         alertView.layer.borderWidth = 0
         alertView.layer.cornerRadius = 14.0
         
-        let additionalHeight = additionalView.heightAnchor.constraint(equalToConstant: (additionalView == nil) ? 0 : 25)
-
-        NSLayoutConstraint.activate([
+        var viewConstraints : [NSLayoutConstraint] = [
             alertView.leadingAnchor.constraint(equalTo: self.view.leadingAnchor, constant: 25),
             alertView.trailingAnchor.constraint(equalTo: self.view.trailingAnchor, constant: -25),
             alertView.centerYAnchor.constraint(equalTo: self.view.centerYAnchor),
@@ -250,21 +257,32 @@ open class AABlurAlertController: UIViewController {
             alertTitle.bottomAnchor.constraint(equalTo: alertSubtitle.topAnchor, constant: -10),
             
             alertSubtitle.leadingAnchor.constraint(equalTo: alertTitle.leadingAnchor),
-            alertSubtitle.trailingAnchor.constraint(equalTo: alertTitle.trailingAnchor),
-            alertSubtitle.bottomAnchor.constraint(equalTo: additionalView.topAnchor, constant: -15),
-            
-            additionalView.leadingAnchor.constraint(equalTo: alertTitle.leadingAnchor),
-            additionalView.trailingAnchor.constraint(equalTo: alertTitle.trailingAnchor),
-            additionalHeight,
-            additionalView.bottomAnchor.constraint(equalTo: buttonsStackView.topAnchor, constant: -25),
-            
+            alertSubtitle.trailingAnchor.constraint(equalTo: alertTitle.trailingAnchor)
+        ]
+        
+        if additionalView == nil {
+            viewConstraints.append(contentsOf: [
+                alertSubtitle.bottomAnchor.constraint(equalTo: buttonsStackView.topAnchor, constant: -25),
+            ])
+        }
+        else {
+            viewConstraints.append(contentsOf: [
+                alertSubtitle.bottomAnchor.constraint(equalTo: additionalView!.topAnchor, constant: -15),
+                additionalView!.heightAnchor.constraint(equalToConstant: 30),
+                additionalView!.leadingAnchor.constraint(equalTo: alertTitle.leadingAnchor),
+                additionalView!.trailingAnchor.constraint(equalTo: alertTitle.trailingAnchor),
+                additionalView!.bottomAnchor.constraint(equalTo: buttonsStackView.topAnchor, constant: -25),
+            ])
+        }
+        
+        viewConstraints.append(contentsOf: [
             buttonsStackView.leadingAnchor.constraint(equalTo: alertTitle.leadingAnchor),
             buttonsStackView.trailingAnchor.constraint(equalTo: alertTitle.trailingAnchor),
             buttonsStackView.bottomAnchor.constraint(equalTo: alertView.bottomAnchor, constant: -20),
             buttonsStackView.heightAnchor.constraint(equalToConstant: 45)
         ])
-        
-        
+
+        NSLayoutConstraint.activate(viewConstraints)
     }
 
     open override func viewWillAppear(_ animated: Bool) {
